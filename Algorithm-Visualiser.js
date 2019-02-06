@@ -178,7 +178,18 @@ class algorithmVisualiser{
 
       }},
 
-      
+      {name:"Selection Sort",algorithm: async ()=>{
+        for(var i = 0; i < self.dataSet.data.length-1 ; i++)  {
+          var minIdx = i ;
+          for(var j = i+1; j < self.dataSet.data.length ; j++ ) {
+              if(self.dataSet.lessthan(j, minIdx))  { //finds the minIdx element
+                minIdx = j ;
+              }
+              await self.wait(self.options.delay); // Delay before next iteration
+            }
+          self.dataSet.swap(minIdx, i);
+        }
+      }},
 
     ];
   }
