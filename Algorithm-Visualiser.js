@@ -2,11 +2,19 @@ class algorithmVisualiser{
   configVariables(){ // Bodge for ES6 not supporting Public Field Declarations
     self.dataSet = {
       data: [],
-      comp: [],
+      compIndicator: [],
       compCount: 0,
-      swap: [],
+      swapIndicator: [],
       swapCount: 0,
-      iteration: 0
+      iterationCount: 0,
+      iteration: () => { self.dataSet.iterationCount++; self.dataSet.swapIndicator = []; self.dataSet.compIndicator = []; },
+      swap: (x,y) => {
+        [ self.dataSet.data[x], self.dataSet.data[y] ] = [ self.dataSet.data[y], self.dataSet.data[x] ];
+        self.dataSet.swapIndicator = [x, y];
+        self.dataSet.swapCount++;
+      },
+      lessthan:    (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] < self.dataSet.data[y]},
+      greaterthan: (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
     };
     self.options = {
       size: 128,
@@ -18,7 +26,8 @@ class algorithmVisualiser{
       lineColor: "#0000FF",
       compColor: "#FF0000",
       swapColor: "#00FF00",
-      lineWidth: 2.5
+      lineWidth: 2.5,
+      fontSize: 15,
     }; 
   }
   constructor(canvas, opts = {}) {
@@ -42,6 +51,7 @@ class algorithmVisualiser{
       advFolder.addColor(self.options, 'compColor');
       advFolder.addColor(self.options, 'swapColor');
       advFolder.add(self.options, 'lineWidth', 0, 15);
+      advFolder.add(self.options, 'fontSize', 0, 72);
       
       if(self.options.fps != false && self.options.gui){
         self.options.fps = new Stats();
@@ -75,7 +85,7 @@ class algorithmVisualiser{
   
   reset(){
     self.structures.find(x => x.name === self.options.structure).func();
-    self.dataSet.iteration = 0;
+    self.dataSet.iterationCount = 0;
     self.dataSet.swapCount = 0;
     self.dataSet.compCount = 0;
   }
@@ -94,12 +104,12 @@ class algorithmVisualiser{
       ctx.lineWidth = lineWidth;
       ctx.beginPath();
       
-      if(self.dataSet.comp.includes(i)){ // If the line is currently in a comparison, draw it in that colour
+      if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
         ctx.lineWidth = lineWidth*3;
         ctx.strokeStyle = self.options.compColor;
       }
       
-      if(self.dataSet.swap.includes(i)){ // If the line is currently in a swap, draw it in that colour
+      if(self.dataSet.swapIndicator.includes(i)){ // If the line is currently in a swap, draw it in that colour
         ctx.lineWidth = lineWidth*3;
         ctx.strokeStyle = self.options.swapColor;
       }
@@ -110,9 +120,9 @@ class algorithmVisualiser{
       ctx.stroke();
     }
     
-    ctx.font = "15px Arial";
-    var textStr = `${self.options.algorithm} Iteration: ${self.dataSet.iteration} Comparisons: ${self.dataSet.compCount} Swaps: ${self.dataSet.swapCount}`;
-    ctx.fillText(textStr, 10, 25);
+    ctx.font = self.options.fontSize + 'px Arial';
+    var textStr = `${self.options.algorithm} Iteration: ${self.dataSet.iterationCount} Comparisons: ${self.dataSet.compCount} Swaps: ${self.dataSet.swapCount}`;
+    ctx.fillText(textStr, 10, self.options.fontSize + 10);
     
     if(self.options.fps != false){self.options.fps.end();}
     window.requestAnimationFrame( () => self.draw() );
@@ -151,31 +161,24 @@ class algorithmVisualiser{
     self.algorithms = [
 
       {name:"Bubble Sort",algorithm: async ()=>{
-        for (let i = ( self.dataSet.data.length - 1); i >= 0; i--){
-          for (let j = ( self.dataSet.data.length - i); j > 0; j--){
-            self.dataSet.iteration++;
-            self.dataSet.compCount++;
-            self.dataSet.swap = [];
-            self.dataSet.comp = [j-1, j];
-            if (self.dataSet.data[j] < self.dataSet.data[j - 1]){
-              [ self.dataSet.data[j-1], self.dataSet.data[j] ] = [ self.dataSet.data[j], self.dataSet.data[j-1] ];
-              self.dataSet.swap = [j-1, j];
-              self.dataSet.swapCount++;
+        for (var i = ( self.dataSet.data.length - 1); i >= 0; i--){
+          for (var j = ( self.dataSet.data.length - i); j > 0; j--){
+            self.dataSet.iteration(); // Iterate counter etc...
+            if (self.dataSet.lessthan(j, j-1)){
+              self.dataSet.swap(j, j-1);
             }
             await self.wait(self.options.delay); // Delay before next iteration
           }
         }
-        self.dataSet.swap = []; // Finished Empty active data
-        self.dataSet.comp = []; // Finished Empty active data
+        self.dataSet.swapIndicator = []; // Finished Empty active data
+        self.dataSet.swapIndicator =[]; // Finished Empty active data
       }},
 
       {name:"Quick Sort",algorithm: async ()=>{
 
       }},
 
-      {name:"Reverse Order",algorithm: async ()=>{
-
-      }}
+      
 
     ];
   }
