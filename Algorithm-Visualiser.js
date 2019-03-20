@@ -28,6 +28,7 @@ class algorithmVisualiser{
       swapColor: "#00FF00",
       lineWidth: 2.5,
       fontSize: 15,
+      displayValues: false,
     }; 
   }
   constructor(canvas, opts = {}) {
@@ -52,6 +53,7 @@ class algorithmVisualiser{
       advFolder.addColor(self.options, 'swapColor');
       advFolder.add(self.options, 'lineWidth', 0, 15);
       advFolder.add(self.options, 'fontSize', 0, 72);
+      advFolder.add(self.options, 'displayValues');
       
       if(self.options.fps != false && self.options.gui){
         self.options.fps = new Stats();
@@ -103,6 +105,9 @@ class algorithmVisualiser{
       ctx.strokeStyle = self.options.lineColor;
       ctx.lineWidth = lineWidth;
       ctx.beginPath();
+
+      let xPos = i*(width/self.dataSet.data.length);
+      let yPos = height - (self.dataSet.data[i] * scaleY);
       
       if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
         ctx.lineWidth = lineWidth*3;
@@ -114,10 +119,17 @@ class algorithmVisualiser{
         ctx.strokeStyle = self.options.swapColor;
       }
       
-      ctx.moveTo(i*(width/self.dataSet.data.length), height);
-      ctx.lineTo(i*(width/self.dataSet.data.length), height - (self.dataSet.data[i] * scaleY));
+      ctx.moveTo(xPos, height);
+      ctx.lineTo(xPos, yPos);
       
       ctx.stroke();
+
+      // Text Above bars
+      if(self.options.displayValues){
+        ctx.font = self.options.fontSize + 'px Arial';
+        var textStr = `${self.dataSet.data[i]}`;
+        ctx.fillText(textStr, xPos - (ctx.measureText(textStr).width / 2), yPos - 5);
+      }
     }
     
     ctx.font = self.options.fontSize + 'px Arial';
