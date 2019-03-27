@@ -268,6 +268,39 @@ class algorithmVisualiser{
         }
       },
 
+      {
+        name: "Shell Sort", algorithm: async () => {          
+          // Define a gap distance.
+          let gap = Math.floor(self.dataSet.data.length / 2);
+
+          // Until gap is bigger then zero do elements comparisons and swaps.
+          while (gap > 0) {
+            // Go and compare all distant element pairs.
+            for (let i = 0; i < (self.dataSet.data.length - gap); i += 1) {
+              let currentIndex = i;
+              let gapShiftedIndex = i + gap;
+
+              while (currentIndex >= 0) {
+                self.dataSet.iteration(); // Iterate counter
+                // Compare and swap array elements if needed.
+                if (self.dataSet.lessthan(gapShiftedIndex, currentIndex)) {
+                  self.dataSet.swap(currentIndex, gapShiftedIndex);
+                }
+                await self.wait(self.options.delay); self
+                gapShiftedIndex = currentIndex;
+                currentIndex -= gap;
+              }
+            }
+
+            // Shrink the gap.
+            gap = Math.floor(gap / 2);
+          }
+        
+          self.dataSet.swapIndicator = []; // Finished Empty active data
+          self.dataSet.compIndicator = []; // Finished Empty active data
+        }
+      },
+
     ];
   }
 }
