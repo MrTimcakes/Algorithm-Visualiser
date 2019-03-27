@@ -173,6 +173,7 @@ class algorithmVisualiser{
     self.algorithms = [
 
       {name:"Bubble Sort",algorithm: async ()=>{
+        
         for (var i = ( self.dataSet.data.length - 1); i >= 0; i--){
           for (var j = ( self.dataSet.data.length - i); j > 0; j--){
             self.dataSet.iteration(); // Iterate counter etc...
@@ -187,6 +188,44 @@ class algorithmVisualiser{
       }},
 
       {name:"Quick Sort",algorithm: async ()=>{
+        
+   function quickSort(self.dataSet.data, left, right){
+   var len = self.dataSet.data.length, 
+   pivot,
+   partitionIndex;
+          
+  if(left < right){
+    pivot = right;
+    partitionIndex = partition(self.dataSet.data, pivot, left, right);
+    
+   //sort left and right
+   quickSort(self.dataSet.data, left, partitionIndex - 1);
+   quickSort(self.dataSet.data, partitionIndex + 1, right);
+  }
+  return self.dataSet.data;
+}
+function partition(self.dataSet.data, pivot, left, right){
+   var pivotValue = self.dataSet.data[pivot],
+       partitionIndex = left;
+
+   for(var i = left; i < right; i++){
+    if(self.dataSet.data[i] < pivotValue){
+     self.dataSet.swap (self.dataSet.data, i, partitionIndex);
+      partitionIndex++;
+    }
+  }
+  self.dataSet.swap(self.dataSet.data, right, partitionIndex);
+  return partitionIndex;
+}
+function swaps(self.dataSet.data, i, j){
+   var temp = self.dataSet.data[i];
+   self.dataSet.data[i] = self.dataSet.data[j];
+   self.dataSet.data[j] = temp;
+}
+         await self.wait(self.options.delay); // Delay before next iteration
+            
+          self.dataSet.swap(minIdx, i);
+        
 
       }},
 
