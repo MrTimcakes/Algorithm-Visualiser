@@ -187,7 +187,52 @@ class algorithmVisualiser{
       }},
 
       {name:"Quick Sort",algorithm: async ()=>{
+        var low = 0;
+        var high = self.dataSet.data.length - 1;
 
+        // Create an auxiliary stack and push inital values
+        //int stack[high - low + 1]; 
+        var stack = []; 
+        var top = -1;
+        stack[++top] = low; 
+        stack[++top] = high; 
+      
+        // Keep popping from stack while is not empty 
+        while (top >= 0) { 
+          // Pop high and low 
+          high = stack[top--]; 
+          low = stack[top--]; 
+
+          // Inline Partion Calculation
+          var partitionIndex = (low - 1); 
+        
+          for (var j = low; j <= high - 1; j++) {
+            if (self.dataSet.lessthan(j, high)) { // Should be <=
+            //if (self.dataSet.data[j] <= pivotValue) { 
+              partitionIndex++; 
+              self.dataSet.swap(partitionIndex, j);
+              await self.wait(self.options.delay); // Delay before next iteration
+            } 
+          } 
+          self.dataSet.swap(partitionIndex + 1, high);
+          await self.wait(self.options.delay); // Delay before next iteration
+          partitionIndex++;
+          // End of Partition
+
+          // If there are elements on left side of pivot, 
+          // then push left side to stack 
+          if (partitionIndex - 1 > low) { 
+              stack[++top] = low; 
+              stack[++top] = partitionIndex - 1; 
+          } 
+    
+          // If there are elements on right side of pivot, 
+          // then push right side to stack 
+          if (partitionIndex + 1 < high) { 
+              stack[++top] = partitionIndex + 1; 
+              stack[++top] = high; 
+          }
+        }
       }},
 
       {name:"Selection Sort",algorithm: async ()=>{
