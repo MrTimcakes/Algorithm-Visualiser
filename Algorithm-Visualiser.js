@@ -210,9 +210,7 @@ class algorithmVisualiser{
               self.dataSet.swap(j, j-1);
             }
 		  while(self.paused)
-			{
 				await self.wait(50);
-			}
             await self.wait(self.options.delay); // Delay before next iteration
           }
         }
@@ -251,9 +249,7 @@ class algorithmVisualiser{
           self.dataSet.swap(partitionIndex + 1, high);
           await self.wait(self.options.delay); // Delay before next iteration
 		  while(self.paused)
-			{
 				await self.wait(50);
-			}
           partitionIndex++;
           // End of Partition
 
@@ -282,9 +278,7 @@ class algorithmVisualiser{
               }
               await self.wait(self.options.delay); // Delay before next iteration
 			  while(self.paused)
-				{
 					await self.wait(50);
-				}
             }
           self.dataSet.swap(minIdx, i);
         }
@@ -302,9 +296,7 @@ class algorithmVisualiser{
               j = j - 1;
               await self.wait(self.options.delay);
 			  while(self.paused)
-				{
 					await self.wait(50);
-				}
             }
             self.dataSet.data[j + 1] = value;
             await self.wait(self.options.delay);
@@ -336,9 +328,7 @@ class algorithmVisualiser{
                 gapShiftedIndex = currentIndex;
                 currentIndex -= gap;
 				while(self.paused)
-				{
 					await self.wait(50);
-				}
               }
             }
 
