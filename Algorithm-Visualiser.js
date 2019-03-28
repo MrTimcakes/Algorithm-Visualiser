@@ -12,9 +12,10 @@ class algorithmVisualiser{
         [ self.dataSet.data[x], self.dataSet.data[y] ] = [ self.dataSet.data[y], self.dataSet.data[x] ];
         self.dataSet.swapIndicator = [x, y];
         self.dataSet.swapCount++;
+        self.audio.swap();
       },
-      lessthan:    (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] < self.dataSet.data[y]},
-      greaterthan: (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
+      lessthan:    (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] < self.dataSet.data[y]},
+      greaterthan: (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
     };
     self.options = {
       size: 128,
@@ -29,7 +30,17 @@ class algorithmVisualiser{
       lineWidth: 2.5,
       fontSize: 15,
       displayValues: false,
-    }; 
+    };
+    self.audio = {
+      enabled: true,
+      volume: 100,
+      //swapTone: "C4",
+      swapTone: 350,
+      compTone: 200,
+      synth: new Tone.Synth().toMaster(),
+      swap: () =>{self.audio.synth.triggerAttackRelease(self.audio.swapTone, '1n')},
+      comp: () =>{self.audio.synth.triggerAttackRelease(self.audio.compTone, '1n')},
+    };
   }
   constructor(canvas, opts = {}) {
     self = this;
@@ -40,7 +51,7 @@ class algorithmVisualiser{
     
     if(self.options.gui){
       var gui = new dat.GUI();
-      gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm");
+      gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm").onFinishChange(self.reset);
       gui.add(self.options, 'structure', self.structures.map(x => x.name)).name("Structure").onFinishChange(self.reset);
       gui.add(self.options, 'size', 64, 1024, 64).name("Size").onChange(self.reset);
       gui.add(self.options, 'delay', 0, 64).name("Delay (ms)");
@@ -48,6 +59,11 @@ class algorithmVisualiser{
       gui.add(self, 'startStop').name("Start / Stop");
       
       let advFolder = gui.addFolder("Advanced");
+      let audioFolder = advFolder.addFolder("Audio");
+      audioFolder.add(self.audio, 'enabled').name("Enable");
+      audioFolder.add(self.audio, 'volume').name("Volume").onChange(()=>{Tone.Master.volume = self.audio.volume});
+      audioFolder.add(self.audio, 'swapTone', 20, 1024).name("Swap Tone");
+      audioFolder.add(self.audio, 'compTone', 20, 1024).name("Comp Tone");
       advFolder.addColor(self.options, 'lineColor');
       advFolder.addColor(self.options, 'compColor');
       advFolder.addColor(self.options, 'swapColor');
@@ -88,6 +104,8 @@ class algorithmVisualiser{
   reset(){
     self.structures.find(x => x.name === self.options.structure).func();
     self.dataSet.iterationCount = 0;
+    self.dataSet.swapIndicator = [];
+    self.dataSet.compIndicator = [];
     self.dataSet.swapCount = 0;
     self.dataSet.compCount = 0;
   }
