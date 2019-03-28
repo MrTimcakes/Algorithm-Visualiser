@@ -12,9 +12,10 @@ class algorithmVisualiser{
         [ self.dataSet.data[x], self.dataSet.data[y] ] = [ self.dataSet.data[y], self.dataSet.data[x] ];
         self.dataSet.swapIndicator = [x, y];
         self.dataSet.swapCount++;
+        self.audio.swap();
       },
-      lessthan:    (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] < self.dataSet.data[y]},
-      greaterthan: (x,y) => { self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
+      lessthan:    (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] < self.dataSet.data[y]},
+      greaterthan: (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
     };
     self.options = {
       size: 128,
@@ -28,8 +29,19 @@ class algorithmVisualiser{
       swapColor: "#00FF00",
       lineWidth: 2.5,
       fontSize: 15,
+      displayValues: false,
     };
-    self.paused = true;
+    self.audio = {
+      enabled: true,
+      volume: 100,
+      //swapTone: "C4",
+      swapTone: 350,
+      compTone: 200,
+      synth: new Tone.Synth().toMaster(),
+      swap: () =>{self.audio.synth.triggerAttackRelease(self.audio.swapTone, '1n')},
+      comp: () =>{self.audio.synth.triggerAttackRelease(self.audio.compTone, '1n')},
+    };
+	self.paused = true;
     self.ran = false;
   }
   constructor(canvas, opts = {}) {
@@ -41,7 +53,7 @@ class algorithmVisualiser{
     
     if(self.options.gui){
       var gui = new dat.GUI();
-      gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm");
+      gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm").onFinishChange(self.reset);
       gui.add(self.options, 'structure', self.structures.map(x => x.name)).name("Structure").onFinishChange(self.reset);
       gui.add(self.options, 'size', 64, 1024, 64).name("Size").onChange(self.reset);
       gui.add(self.options, 'delay', 0, 64).name("Delay (ms)");
@@ -49,11 +61,17 @@ class algorithmVisualiser{
       gui.add(self, 'startStop').name("Start / Stop");
       
       let advFolder = gui.addFolder("Advanced");
+      let audioFolder = advFolder.addFolder("Audio");
+      audioFolder.add(self.audio, 'enabled').name("Enable");
+      audioFolder.add(self.audio, 'volume').name("Volume").onChange(()=>{Tone.Master.volume = self.audio.volume});
+      audioFolder.add(self.audio, 'swapTone', 20, 1024).name("Swap Tone");
+      audioFolder.add(self.audio, 'compTone', 20, 1024).name("Comp Tone");
       advFolder.addColor(self.options, 'lineColor');
       advFolder.addColor(self.options, 'compColor');
       advFolder.addColor(self.options, 'swapColor');
       advFolder.add(self.options, 'lineWidth', 0, 15);
       advFolder.add(self.options, 'fontSize', 0, 72);
+      advFolder.add(self.options, 'displayValues');
       
       if(self.options.fps != false && self.options.gui){
         self.options.fps = new Stats();
@@ -98,6 +116,8 @@ class algorithmVisualiser{
   reset(){
     self.structures.find(x => x.name === self.options.structure).func();
     self.dataSet.iterationCount = 0;
+    self.dataSet.swapIndicator = [];
+    self.dataSet.compIndicator = [];
     self.dataSet.swapCount = 0;
     self.dataSet.compCount = 0;
   }
@@ -110,12 +130,14 @@ class algorithmVisualiser{
     var scaleY = (height / Math.max(...self.dataSet.data));
     var lineWidth = self.options.lineWidth || (width/self.dataSet.data.length)+0.5;
     
-    
         
     for(let i=0;i<self.dataSet.data.length;i++){ // For every element in the dataset, draw its line
       ctx.strokeStyle = self.options.lineColor;
       ctx.lineWidth = lineWidth;
       ctx.beginPath();
+
+      let xPos = i*(width/self.dataSet.data.length);
+      let yPos = height - (self.dataSet.data[i] * scaleY);
       
       if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
         ctx.lineWidth = lineWidth*3;
@@ -127,13 +149,17 @@ class algorithmVisualiser{
         ctx.strokeStyle = self.options.swapColor;
       }
       
-      ctx.moveTo(i*(width/self.dataSet.data.length), height);
-      ctx.lineTo(i*(width/self.dataSet.data.length), height - (self.dataSet.data[i] * scaleY));
-
+      ctx.moveTo(xPos, height);
+      ctx.lineTo(xPos, yPos);
+      
       ctx.stroke();
 
-
-      
+      // Text Above bars
+      if(self.options.displayValues){
+        ctx.font = self.options.fontSize + 'px Arial';
+        var textStr = `${self.dataSet.data[i]}`;
+        ctx.fillText(textStr, xPos - (ctx.measureText(textStr).width / 2), yPos - 5);
+      }
     }
     
     ctx.font = self.options.fontSize + 'px Arial';
@@ -183,11 +209,10 @@ class algorithmVisualiser{
             if (self.dataSet.lessthan(j, j-1)){
               self.dataSet.swap(j, j-1);
             }
-            while(self.paused)
-            {
-              await self.wait(50);
-            }
-
+		  while(self.paused)
+			{
+				await self.wait(50);
+			}
             await self.wait(self.options.delay); // Delay before next iteration
           }
         }
@@ -196,7 +221,56 @@ class algorithmVisualiser{
       }},
 
       {name:"Quick Sort",algorithm: async ()=>{
+        var low = 0;
+        var high = self.dataSet.data.length - 1;
 
+        // Create an auxiliary stack and push inital values
+        //int stack[high - low + 1]; 
+        var stack = []; 
+        var top = -1;
+        stack[++top] = low; 
+        stack[++top] = high; 
+      
+        // Keep popping from stack while is not empty 
+        while (top >= 0) { 
+          // Pop high and low 
+          high = stack[top--]; 
+          low = stack[top--]; 
+			
+          // Inline Partion Calculation
+          var partitionIndex = (low - 1); 
+		  
+          for (var j = low; j <= high - 1; j++) {
+            if (self.dataSet.lessthan(j, high)) { // Should be <=
+            //if (self.dataSet.data[j] <= pivotValue) { 
+              partitionIndex++; 
+              self.dataSet.swap(partitionIndex, j);
+              await self.wait(self.options.delay); // Delay before next iteration
+            } 
+          } 
+          self.dataSet.swap(partitionIndex + 1, high);
+          await self.wait(self.options.delay); // Delay before next iteration
+		  while(self.paused)
+			{
+				await self.wait(50);
+			}
+          partitionIndex++;
+          // End of Partition
+
+          // If there are elements on left side of pivot, 
+          // then push left side to stack 
+          if (partitionIndex - 1 > low) { 
+              stack[++top] = low; 
+              stack[++top] = partitionIndex - 1; 
+          } 
+    
+          // If there are elements on right side of pivot, 
+          // then push right side to stack 
+          if (partitionIndex + 1 < high) { 
+              stack[++top] = partitionIndex + 1; 
+              stack[++top] = high; 
+          }
+        }
       }},
 
       {name:"Selection Sort",algorithm: async ()=>{
@@ -207,10 +281,75 @@ class algorithmVisualiser{
                 minIdx = j ;
               }
               await self.wait(self.options.delay); // Delay before next iteration
+			  while(self.paused)
+				{
+					await self.wait(50);
+				}
             }
           self.dataSet.swap(minIdx, i);
         }
       }},
+
+      {
+        name: "Insertion Sort", algorithm: async () => {
+          for(let i = 1; i < self.dataSet.data.length; i++){
+            let value = self.dataSet.data[i];
+            let j = i - 1;
+            self.dataSet.compIndicator = [j, i]; self.dataSet.compCount++;
+            while(j >= 0 && self.dataSet.data[j] > value){
+              self.dataSet.data[j + 1] = self.dataSet.data[j];
+              self.dataSet.swapIndicator = [j, j+1]; self.dataSet.swapCount++;
+              j = j - 1;
+              await self.wait(self.options.delay);
+			  while(self.paused)
+				{
+					await self.wait(50);
+				}
+            }
+            self.dataSet.data[j + 1] = value;
+            await self.wait(self.options.delay);
+          }
+          self.dataSet.swapIndicator = []; // Finished Empty active data
+          self.dataSet.compIndicator = []; // Finished Empty active data
+        }
+      },
+
+      {
+        name: "Shell Sort", algorithm: async () => {          
+          // Define a gap distance.
+          let gap = Math.floor(self.dataSet.data.length / 2);
+
+          // Until gap is bigger then zero do elements comparisons and swaps.
+          while (gap > 0) {
+            // Go and compare all distant element pairs.
+            for (let i = 0; i < (self.dataSet.data.length - gap); i += 1) {
+              let currentIndex = i;
+              let gapShiftedIndex = i + gap;
+
+              while (currentIndex >= 0) {
+                self.dataSet.iteration(); // Iterate counter
+                // Compare and swap array elements if needed.
+                if (self.dataSet.lessthan(gapShiftedIndex, currentIndex)) {
+                  self.dataSet.swap(currentIndex, gapShiftedIndex);
+                }
+                await self.wait(self.options.delay); self
+                gapShiftedIndex = currentIndex;
+                currentIndex -= gap;
+				while(self.paused)
+				{
+					await self.wait(50);
+				}
+              }
+            }
+
+            // Shrink the gap.
+            gap = Math.floor(gap / 2);
+          }
+        
+          self.dataSet.swapIndicator = []; // Finished Empty active data
+          self.dataSet.compIndicator = []; // Finished Empty active data
+        }
+      },
 
     ];
   }
