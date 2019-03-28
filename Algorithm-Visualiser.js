@@ -1,4 +1,4 @@
-class algorithmVisualiser{
+lass algorithmVisualiser{
   configVariables(){ // Bodge for ES6 not supporting Public Field Declarations
     self.dataSet = {
       data: [],
@@ -28,7 +28,9 @@ class algorithmVisualiser{
       swapColor: "#00FF00",
       lineWidth: 2.5,
       fontSize: 15,
-    }; 
+    };
+    self.paused = true;
+    self.ran = false;
   }
   constructor(canvas, opts = {}) {
     self = this;
@@ -80,7 +82,17 @@ class algorithmVisualiser{
   }
 
   startStop(){
-    self.algorithms.find(x => x.name === self.options.algorithm).algorithm();
+    if(self.paused)
+    {
+      self.paused = false;
+      if (!self.ran)
+      {
+        self.algorithms.find(x => x.name === self.options.algorithm).algorithm();
+        self.ran = true;
+      }
+    }
+    else
+      self.paused = true;
   }
   
   reset(){
@@ -97,6 +109,7 @@ class algorithmVisualiser{
     var height = ctx.canvas.height = ctx.canvas.clientHeight;
     var scaleY = (height / Math.max(...self.dataSet.data));
     var lineWidth = self.options.lineWidth || (width/self.dataSet.data.length)+0.5;
+    
     
         
     for(let i=0;i<self.dataSet.data.length;i++){ // For every element in the dataset, draw its line
@@ -116,8 +129,11 @@ class algorithmVisualiser{
       
       ctx.moveTo(i*(width/self.dataSet.data.length), height);
       ctx.lineTo(i*(width/self.dataSet.data.length), height - (self.dataSet.data[i] * scaleY));
-      
+
       ctx.stroke();
+
+
+      
     }
     
     ctx.font = self.options.fontSize + 'px Arial';
@@ -167,6 +183,11 @@ class algorithmVisualiser{
             if (self.dataSet.lessthan(j, j-1)){
               self.dataSet.swap(j, j-1);
             }
+            while(self.paused)
+            {
+              await self.wait(50);
+            }
+
             await self.wait(self.options.delay); // Delay before next iteration
           }
         }
