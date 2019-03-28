@@ -1,4 +1,4 @@
-lass algorithmVisualiser{
+class algorithmVisualiser{
   configVariables(){ // Bodge for ES6 not supporting Public Field Declarations
     self.dataSet = {
       data: [],
