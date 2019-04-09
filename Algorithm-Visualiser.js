@@ -7,6 +7,7 @@ class algorithmVisualiser{
       swapIndicator: [],
       swapCount: 0,
       iterationCount: 0,
+      nextIteration: null,
       iteration: () => { self.dataSet.iterationCount++; self.dataSet.swapIndicator = []; self.dataSet.compIndicator = []; },
       swap: (x,y) => {
         [ self.dataSet.data[x], self.dataSet.data[y] ] = [ self.dataSet.data[y], self.dataSet.data[x] ];
@@ -18,6 +19,7 @@ class algorithmVisualiser{
       greaterthan: (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
     };
     self.options = {
+      status: "finished",
       size: 128,
       delay: 16,
       structure: "Random",
@@ -34,12 +36,11 @@ class algorithmVisualiser{
     self.audio = {
       enabled: true,
       volume: 100,
-      //swapTone: "C4",
       swapTone: 350,
       compTone: 200,
       synth: new Tone.Synth().toMaster(),
-      swap: () =>{self.audio.synth.triggerAttackRelease(self.audio.swapTone, '1n')},
-      comp: () =>{self.audio.synth.triggerAttackRelease(self.audio.compTone, '1n')},
+      swap: () =>{self.audio.synth.triggerAttackRelease(self.audio.swapTone, 0.1)},
+      comp: () =>{self.audio.synth.triggerAttackRelease(self.audio.compTone, 0.1)},
     };
   }
   constructor(canvas, opts = {}) {
@@ -57,6 +58,7 @@ class algorithmVisualiser{
       gui.add(self.options, 'delay', 0, 64).name("Delay (ms)");
       gui.add(self, 'reset').name("Reset");
       gui.add(self, 'startStop').name("Start / Stop");
+      gui.add(self, 'step').name("Step");
       
       let advFolder = gui.addFolder("Advanced");
       let audioFolder = advFolder.addFolder("Audio");
@@ -98,16 +100,40 @@ class algorithmVisualiser{
   }
 
   startStop(){
-    self.algorithms.find(x => x.name === self.options.algorithm).algorithm();
+    switch(self.options.status){
+      case "reset":
+        self.options.status = "running";
+        self.algorithms.find(x => x.name === self.options.algorithm).algorithm();
+        alert("Test");
+        break;
+      case "running":
+        self.options.status = "paused";
+        break;
+      case "paused":
+        self.options.status = "running";
+        self.dataSet.nextIteration();
+        break;
+      default:
+        //
+    }
   }
   
-  reset(){
-    self.structures.find(x => x.name === self.options.structure).func();
+  step(){
+    if(self.options.status == "paused"){self.dataSet.nextIteration()};
+  }
+  
+  resetCounters(){
     self.dataSet.iterationCount = 0;
     self.dataSet.swapIndicator = [];
     self.dataSet.compIndicator = [];
     self.dataSet.swapCount = 0;
     self.dataSet.compCount = 0;
+  }
+
+  reset(){
+    self.structures.find(x => x.name === self.options.structure).func();
+    self.resetCounters();
+    self.options.status = "reset";
   }
 
   draw(){
@@ -161,7 +187,8 @@ class algorithmVisualiser{
   
   async wait(time) {
     return new Promise(function(resolve) {
-      setTimeout(resolve, time);
+      self.dataSet.nextIteration = resolve;
+      if(self.options.status == "running"){setTimeout(resolve, time);}
     });
   }
   
