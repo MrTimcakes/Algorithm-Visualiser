@@ -104,7 +104,6 @@ class algorithmVisualiser{
       case "reset":
         self.options.status = "running";
         self.algorithms.find(x => x.name === self.options.algorithm).algorithm();
-        alert("Test");
         break;
       case "running":
         self.options.status = "paused";
@@ -182,12 +181,12 @@ class algorithmVisualiser{
     
     if(self.options.fps != false){self.options.fps.end();}
     window.requestAnimationFrame( () => self.draw() );
-    //window.requestAnimationFrame( this.draw.bind(this) ); // Fix "this" binding
   }
   
   async wait(time) {
     return new Promise(function(resolve) {
       self.dataSet.nextIteration = resolve;
+      if(self.options.status == "reset"){self.resetCounters();}
       if(self.options.status == "running"){setTimeout(resolve, time);}
     });
   }
@@ -207,12 +206,12 @@ class algorithmVisualiser{
       {name:"Reverse Order", func: ()=>{
         self.dataSet.data = Array.from(new Array(self.options.size),(v,i)=>self.options.size-i);
       }},
-      {name:"Nearly Sorted", func: ()=>{
-        // TODO: Make Nearly Sorted Arr
-      }},
-      {name:"Few Unique", func: ()=>{
-        // TODO: Make Arr with a few unique values
-      }}
+      // {name:"Nearly Sorted", func: ()=>{
+      //   // TODO: Make Nearly Sorted Arr
+      // }},
+      // {name:"Few Unique", func: ()=>{
+      //   // TODO: Make Arr with a few unique values
+      // }}
     ]
 
     self.algorithms = [
@@ -223,8 +222,8 @@ class algorithmVisualiser{
             self.dataSet.iteration(); // Iterate counter etc...
             if (self.dataSet.lessthan(j, j-1)){
               self.dataSet.swap(j, j-1);
+              await self.wait(self.options.delay); // Delay before next iteration
             }
-            await self.wait(self.options.delay); // Delay before next iteration
           }
         }
         self.dataSet.swapIndicator = []; // Finished Empty active data
