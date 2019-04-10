@@ -19,6 +19,7 @@ class algorithmVisualiser{
       greaterthan: (x,y) => { self.audio.comp(); self.dataSet.compIndicator = [x, y]; self.dataSet.compCount++; return self.dataSet.data[x] > self.dataSet.data[y]},
     };
     self.options = {
+      renderer: "Graphical",
       status: "finished",
       size: 128,
       delay: 16,
@@ -52,6 +53,7 @@ class algorithmVisualiser{
     
     if(self.options.gui){
       var gui = new dat.GUI();
+      gui.add(self.options, 'renderer', self.renderers.map(x => x.name)).name("Renderer");
       gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm").onFinishChange(self.reset);
       gui.add(self.options, 'structure', self.structures.map(x => x.name)).name("Structure").onFinishChange(self.reset);
       gui.add(self.options, 'size', 64, 1024, 64).name("Size").onChange(self.reset);
@@ -137,46 +139,14 @@ class algorithmVisualiser{
 
   draw(){
     if(self.options.fps != false){self.options.fps.begin();}
-    var ctx = self.ctx;
-    var width = ctx.canvas.width = ctx.canvas.clientWidth;
-    var height = ctx.canvas.height = ctx.canvas.clientHeight;
-    var scaleY = (height / Math.max(...self.dataSet.data));
-    var lineWidth = self.options.lineWidth || (width/self.dataSet.data.length)+0.5;
+    let ctx = self.ctx;
+    let width = ctx.canvas.width = ctx.canvas.clientWidth;
+    let height = ctx.canvas.height = ctx.canvas.clientHeight;
     
-        
-    for(let i=0;i<self.dataSet.data.length;i++){ // For every element in the dataset, draw its line
-      ctx.strokeStyle = self.options.lineColor;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-
-      let xPos = i*(width/self.dataSet.data.length);
-      let yPos = height - (self.dataSet.data[i] * scaleY);
+    self.renderers.find(x => x.name === self.options.renderer).func();
       
-      if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
-        ctx.lineWidth = lineWidth*3;
-        ctx.strokeStyle = self.options.compColor;
-      }
-      
-      if(self.dataSet.swapIndicator.includes(i)){ // If the line is currently in a swap, draw it in that colour
-        ctx.lineWidth = lineWidth*3;
-        ctx.strokeStyle = self.options.swapColor;
-      }
-      
-      ctx.moveTo(xPos, height);
-      ctx.lineTo(xPos, yPos);
-      
-      ctx.stroke();
-
-      // Text Above bars
-      if(self.options.displayValues){
-        ctx.font = self.options.fontSize + 'px Arial';
-        var textStr = `${self.dataSet.data[i]}`;
-        ctx.fillText(textStr, xPos - (ctx.measureText(textStr).width / 2), yPos - 5);
-      }
-    }
-    
     ctx.font = self.options.fontSize + 'px Arial';
-    var textStr = `${self.options.algorithm} Iteration: ${self.dataSet.iterationCount} Comparisons: ${self.dataSet.compCount} Swaps: ${self.dataSet.swapCount}`;
+    let textStr = `${self.options.algorithm} Iteration: ${self.dataSet.iterationCount}, Comparisons: ${self.dataSet.compCount}, Swaps: ${self.dataSet.swapCount}`;
     ctx.fillText(textStr, 10, self.options.fontSize + 10);
     
     if(self.options.fps != false){self.options.fps.end();}
@@ -191,7 +161,90 @@ class algorithmVisualiser{
     });
   }
   
-  configDynamicFunctions(){ // Bodge for ES6 not supporting Public Field Declarations  
+  configDynamicFunctions(){ // Bodge for ES6 not supporting Public Field Declarations
+    self.renderers = [
+      {name:"Graphical", func: ()=>{
+        let ctx = self.ctx;
+        let width = ctx.canvas.width = ctx.canvas.clientWidth;
+        let height = ctx.canvas.height = ctx.canvas.clientHeight;
+        let lineWidth = self.options.lineWidth || (width/self.dataSet.data.length)+0.5;
+        let scaleY = (height / Math.max(...self.dataSet.data));
+        for(let i=0;i<self.dataSet.data.length;i++){ // For every element in the dataset, draw its line
+          ctx.strokeStyle = self.options.lineColor;
+          ctx.lineWidth = lineWidth;
+          ctx.beginPath();
+    
+          let xPos = i*(width/self.dataSet.data.length);
+          let yPos = height - (self.dataSet.data[i] * scaleY);
+          
+          if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
+            ctx.lineWidth = lineWidth*3;
+            ctx.strokeStyle = self.options.compColor;
+          }
+          
+          if(self.dataSet.swapIndicator.includes(i)){ // If the line is currently in a swap, draw it in that colour
+            ctx.lineWidth = lineWidth*3;
+            ctx.strokeStyle = self.options.swapColor;
+          }
+          
+          ctx.moveTo(xPos, height);
+          ctx.lineTo(xPos, yPos);
+          
+          ctx.stroke();
+    
+          // Text Above bars
+          if(self.options.displayValues){
+            ctx.font = self.options.fontSize + 'px Arial';
+            var textStr = `${self.dataSet.data[i]}`;
+            ctx.fillText(textStr, xPos - (ctx.measureText(textStr).width / 2), yPos - 5);
+          }
+        }
+      }},
+      {name:"Vertical", func: ()=>{
+        let ctx = self.ctx;
+        let width = ctx.canvas.width = ctx.canvas.clientWidth;
+        let height = ctx.canvas.height = ctx.canvas.clientHeight;
+        let lineWidth = self.options.lineWidth || (width/self.dataSet.data.length)+0.5;
+        for(let i=0;i<self.dataSet.data.length;i++){ // For every element in the dataset, draw its line
+          ctx.strokeStyle = self.options.lineColor;
+          ctx.lineWidth = lineWidth;
+          ctx.beginPath();
+    
+          let scaleX = (width / Math.max(...self.dataSet.data));
+          let barWidth = (self.dataSet.data[i] * scaleX);
+          let x1 = width/2 - (barWidth/2);
+          let x2 = width/2 + (barWidth/2);
+          let yPos = i * (height/self.dataSet.data.length);
+    
+          let xPos = i*(width/self.dataSet.data.length);
+          //let yPos = height - (self.dataSet.data[i] * scaleY);
+          
+          if(self.dataSet.compIndicator.includes(i)){ // If the line is currently in a comparison, draw it in that colour
+            ctx.lineWidth = lineWidth*3;
+            ctx.strokeStyle = self.options.compColor;
+          }
+          
+          if(self.dataSet.swapIndicator.includes(i)){ // If the line is currently in a swap, draw it in that colour
+            ctx.lineWidth = lineWidth*3;
+            ctx.strokeStyle = self.options.swapColor;
+          }
+          
+          ctx.moveTo(x1, yPos);
+          ctx.lineTo(x2, yPos);
+          
+          ctx.stroke();
+    
+          // Text Above bars
+          if(self.options.displayValues){
+            ctx.font = self.options.fontSize + 'px Arial';
+            var textStr = `${self.dataSet.data[i]}`;
+            ctx.fillText(textStr, x1 - (ctx.measureText(textStr).width) -1, yPos + ((self.options.fontSize / 2) -3));
+            ctx.fillText(textStr, x2, yPos + ((self.options.fontSize / 2) -3));
+          }
+        }
+      }},
+    ]
+
     self.structures = [
       {name:"Random", func: ()=>{
         self.dataSet.data = Array.from({length: self.options.size}, () => Math.floor(Math.random() * self.options.size));
