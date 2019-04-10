@@ -297,13 +297,15 @@ class algorithmVisualiser{
           for(let i = 1; i < self.dataSet.data.length; i++){
             let value = self.dataSet.data[i];
             let j = i - 1;
-            self.dataSet.compIndicator = [j, i]; self.dataSet.compCount++;
             while(j >= 0 && self.dataSet.data[j] > value){
+              self.dataSet.swapIndicator = []
+              self.dataSet.compIndicator = [j, i]; self.dataSet.compCount++;
               self.dataSet.data[j + 1] = self.dataSet.data[j];
-              self.dataSet.swapIndicator = [j, j+1]; self.dataSet.swapCount++;
               j = j - 1;
               await self.wait(self.options.delay);
             }
+            self.dataSet.swapIndicator = [j + 1, i]; self.dataSet.swapCount++;
+            self.dataSet.compIndicator = [];
             self.dataSet.data[j + 1] = value;
             await self.wait(self.options.delay);
           }
