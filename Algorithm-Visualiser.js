@@ -35,13 +35,13 @@ class algorithmVisualiser{
       displayValues: false,
     };
     self.audio = {
-      enabled: true,
+      enabled: false,
       volume: 100,
       swapTone: 350,
       compTone: 200,
       synth: new Tone.Synth().toMaster(),
-      swap: () =>{self.audio.synth.triggerAttackRelease(self.audio.swapTone, 0.1)},
-      comp: () =>{self.audio.synth.triggerAttackRelease(self.audio.compTone, 0.1)},
+      swap: () =>{if(!self.audio.enabled){return;}self.audio.synth.triggerAttackRelease(self.audio.swapTone, 0.1)},
+      comp: () =>{if(!self.audio.enabled){return;}self.audio.synth.triggerAttackRelease(self.audio.compTone, 0.1)},
     };
   }
   constructor(canvas, opts = {}) {
@@ -56,7 +56,7 @@ class algorithmVisualiser{
       gui.add(self.options, 'renderer', self.renderers.map(x => x.name)).name("Renderer");
       gui.add(self.options, 'algorithm', self.algorithms.map(x => x.name)).name("Algorithm").onFinishChange(self.reset);
       gui.add(self.options, 'structure', self.structures.map(x => x.name)).name("Structure").onFinishChange(self.reset);
-      gui.add(self.options, 'size', 64, 1024, 64).name("Size").onChange(self.reset);
+      gui.add(self.options, 'size', 32, 256, 8).name("Size").onChange(self.reset);
       gui.add(self.options, 'delay', 0, 64).name("Delay (ms)");
       gui.add(self, 'reset').name("Reset");
       gui.add(self, 'startStop').name("Start / Stop");
@@ -65,7 +65,7 @@ class algorithmVisualiser{
       let advFolder = gui.addFolder("Advanced");
       let audioFolder = advFolder.addFolder("Audio");
       audioFolder.add(self.audio, 'enabled').name("Enable");
-      audioFolder.add(self.audio, 'volume').name("Volume").onChange(()=>{Tone.Master.volume = self.audio.volume});
+      // audioFolder.add(self.audio, 'volume').name("Volume").onChange(()=>{Tone.Master.volume = self.audio.volume});
       audioFolder.add(self.audio, 'swapTone', 20, 1024).name("Swap Tone");
       audioFolder.add(self.audio, 'compTone', 20, 1024).name("Comp Tone");
       advFolder.addColor(self.options, 'lineColor');
