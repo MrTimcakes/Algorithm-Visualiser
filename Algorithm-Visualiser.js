@@ -148,6 +148,14 @@ class algorithmVisualiser{
     ctx.font = self.options.fontSize + 'px Arial';
     let textStr = `${self.options.algorithm} Iteration: ${self.dataSet.iterationCount}, Comparisons: ${self.dataSet.compCount}, Swaps: ${self.dataSet.swapCount}`;
     ctx.fillText(textStr, 10, self.options.fontSize + 10);
+
+    ctx.fillStyle = self.options.swapColor;
+    let swapColorStr = `Swap Operation Color`;
+    ctx.fillText(swapColorStr, 10, self.options.fontSize *2 + 10);
+    ctx.fillStyle = self.options.compColor;
+    let compColorStr = `Comparison Operation Color`;
+    ctx.fillText(compColorStr, 10, self.options.fontSize *3 + 10);
+
     
     if(self.options.fps != false){self.options.fps.end();}
     window.requestAnimationFrame( () => self.draw() );
