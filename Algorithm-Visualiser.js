@@ -312,6 +312,7 @@ class algorithmVisualiser{
           var partitionIndex = (low - 1); 
         
           for (var j = low; j <= high - 1; j++) {
+            self.dataSet.iteration(); // Iterate counter
             if (self.dataSet.lessthan(j, high)) { // Should be <=
             //if (self.dataSet.data[j] <= pivotValue) { 
               partitionIndex++; 
@@ -344,11 +345,12 @@ class algorithmVisualiser{
         for(var i = 0; i < self.dataSet.data.length-1 ; i++)  {
           var minIdx = i ;
           for(var j = i+1; j < self.dataSet.data.length ; j++ ) {
-              if(self.dataSet.lessthan(j, minIdx))  { //finds the minIdx element
-                minIdx = j ;
-              }
-              await self.wait(self.options.delay); // Delay before next iteration
+            self.dataSet.iteration(); // Iterate counter
+            if(self.dataSet.lessthan(j, minIdx))  { //finds the minIdx element
+              minIdx = j ;
             }
+            await self.wait(self.options.delay); // Delay before next iteration
+          }
           self.dataSet.swap(minIdx, i);
         }
       }},
@@ -359,6 +361,7 @@ class algorithmVisualiser{
             let value = self.dataSet.data[i];
             let j = i - 1;
             while(j >= 0 && self.dataSet.data[j] > value){
+              self.dataSet.iteration(); // Iterate counter
               self.dataSet.swapIndicator = []
               self.dataSet.compIndicator = [j, i]; self.dataSet.compCount++;
               self.dataSet.data[j + 1] = self.dataSet.data[j];
